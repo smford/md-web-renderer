@@ -1,0 +1,84 @@
+name: Deploy Documentation Site
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: 'Directory containing markdown files (defaults to repo root)'
+        required: false
+        type: string
+        default: '.'
+      fallback-readme:
+        description: 'Copy README.md to index.md if index.md is missing'
+        required: false
+        type: boolean
+        default: true
+      engine-version:
+        description: 'Version or branch of md-web-renderer to use'
+        required: false
+        type: string
+        default: 'main'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Fetch md-web-renderer engine
+        uses: actions/checkout@v4
+        with:
+          repository: 'smford/md-web-renderer'
+          ref: ${{ inputs.engine-version }}
+          path: '.md-web-renderer-tmp'
+
+      - name: Prepare documentation directory
+        shell: bash
+        run: |
+          TARGET_DIR="${{ inputs.path }}"
+          mkdir -p "$TARGET_DIR"
+
+          # Copy engine and cleanup temporary checkout
+          cp .md-web-renderer-tmp/index.html "$TARGET_DIR/index.html"
+          rm -rf .md-web-renderer-tmp
+
+          # Prevent GitHub Pages from processing markdown through Jekyll
+          touch "$TARGET_DIR/.nojekyll"
+
+          # Fallback: copy README.md to index.md if index.md does not exist
+          if [ "${{ inputs.fallback-readme }}" = "true" ]; then
+            if [ ! -f "$TARGET_DIR/index.md" ]; then
+              if [ -f "$TARGET_DIR/README.md" ]; then
+                echo "Using $TARGET_DIR/README.md as index.md"
+                cp "$TARGET_DIR/README.md" "$TARGET_DIR/index.md"
+              elif [ -f "README.md" ]; then
+                echo "Using root README.md as $TARGET_DIR/index.md"
+                cp "README.md" "$TARGET_DIR/index.md"
+              fi
+            fi
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ inputs.path }}
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

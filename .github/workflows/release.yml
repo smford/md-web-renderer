@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine tag name
+        id: vars
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Prepare release assets
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+          
+          # Compute sha256 checksum for standalone index.html
+          shasum -a 256 index.html > index.html.sha256
+
+          # Package standalone archive
+          zip -9 "md-web-renderer-${TAG}.zip" index.html README.md index.html.sha256
+
+      - name: Publish GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+
+          # If the release already exists, upload assets with clobber; otherwise create
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" \
+              index.html \
+              index.html.sha256 \
+              "md-web-renderer-${TAG}.zip" \
+              --clobber
+          else
+            gh release create "$TAG" \
+              index.html \
+              index.html.sha256 \
+              "md-web-renderer-${TAG}.zip" \
+              --title "Release $TAG" \
+              --generate-notes
+          fi
+
+      - name: Update floating major version tag
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+
+          # Check if tag is semver-formatted (e.g., v1.0.0 or v1.2.3)
+          if [[ "$TAG" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+ ]]; then
+            MAJOR_TAG="v${BASH_REMATCH[1]}"
+            echo "Updating floating major tag: $MAJOR_TAG -> $TAG"
+            
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            
+            git tag -fa "$MAJOR_TAG" -m "Update $MAJOR_TAG to $TAG"
+            git push origin "$MAJOR_TAG" --force
+          fi

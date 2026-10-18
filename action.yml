@@ -1,0 +1,54 @@
+name: 'md-web-renderer'
+description: 'Zero-build documentation engine for GitHub Pages. Turns folders of markdown files into interactive docs.'
+author: 'smford'
+branding:
+  icon: 'book-open'
+  color: 'blue'
+
+inputs:
+  path:
+    description: 'Path to the directory containing markdown documentation files'
+    required: false
+    default: '.'
+  fallback-readme:
+    description: 'If index.md does not exist in target path, copy README.md to index.md'
+    required: false
+    default: 'true'
+  upload-pages-artifact:
+    description: 'Whether to automatically upload the GitHub Pages artifact ready for deployment'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare documentation directory
+      shell: bash
+      run: |
+        TARGET_DIR="${{ inputs.path }}"
+        mkdir -p "$TARGET_DIR"
+
+        # Copy the single-file renderer engine from the action directory
+        cp "${{ github.action_path }}/index.html" "$TARGET_DIR/index.html"
+
+        # Prevent GitHub Pages from processing markdown through Jekyll
+        touch "$TARGET_DIR/.nojekyll"
+
+        # Fallback: copy README.md to index.md if index.md does not exist
+        if [ "${{ inputs.fallback-readme }}" = "true" ]; then
+          if [ ! -f "$TARGET_DIR/index.md" ]; then
+            if [ -f "$TARGET_DIR/README.md" ]; then
+              echo "Using $TARGET_DIR/README.md as index.md"
+              cp "$TARGET_DIR/README.md" "$TARGET_DIR/index.md"
+            elif [ -f "README.md" ]; then
+              echo "Using root README.md as $TARGET_DIR/index.md"
+              cp "README.md" "$TARGET_DIR/index.md"
+            fi
+          fi
+        fi
+
+    - name: Upload Pages artifact
+      if: ${{ inputs.upload-pages-artifact == 'true' }}
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ${{ inputs.path }}

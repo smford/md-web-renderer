@@ -55,14 +55,72 @@ cd demo && python3 -m http.server 8000
 # Visit http://localhost:8000/
 ```
 
-## Deploying to GitHub Pages via GitHub Actions
+## Using in Any GitHub Repository
 
-This repository includes an automated workflow in [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) that automatically deploys the demo site to GitHub Pages using `md-web-renderer` as the engine.
+You can easily publish interactive documentation for any repository using `md-web-renderer` via GitHub Actions without installing or building anything.
 
-### Enable GitHub Pages in your repository:
+### Option 1: Reusable Workflow (Zero Configuration - Recommended)
+
+Create `.github/workflows/docs.yml` in your repository:
+
+```yaml
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: smford/md-web-renderer/.github/workflows/deploy.yml@v1
+    with:
+      path: 'docs' # Path to markdown folder (defaults to '.' for root)
+      fallback-readme: true # If index.md is missing, uses README.md automatically
+```
+
+### Option 2: GitHub Action Step (For Custom Workflows)
+
+If you have an existing workflow or build pipeline, add `md-web-renderer` as a step:
+
+```yaml
+- name: Setup Documentation with md-web-renderer
+  uses: smford/md-web-renderer@v1
+  with:
+    path: 'docs' # Path to markdown directory (defaults to '.')
+    fallback-readme: 'true'
+
+- name: Deploy to GitHub Pages
+  uses: actions/deploy-pages@v4
+```
+
+### Option 3: Direct Download via GitHub Releases
+
+For manual deployments, local servers, or non-GitHub CI:
+Download `index.html` from the [Latest Release](https://github.com/smford/md-web-renderer/releases/latest) directly:
+
+```bash
+# Download index.html directly into your docs directory
+curl -sSL https://github.com/smford/md-web-renderer/releases/latest/download/index.html -o docs/index.html
+touch docs/.nojekyll
+```
+
+---
+
+## Enabling GitHub Pages in Your Repository
+
 1. Navigate to **Settings** > **Pages** in your GitHub repository.
 2. Under **Build and deployment** > **Source**, select **GitHub Actions**.
-3. Push to `main` (or run the workflow manually via the **Actions** tab).
-4. GitHub Pages will build and publish your site at `https://<owner>.github.io/<repo>/`.
+3. Push changes to `main` (or run the workflow manually via the **Actions** tab).
+4. GitHub Pages will publish your interactive documentation at `https://<owner>.github.io/<repo>/`.
 
 > **Note:** Browsers restrict asynchronous `fetch()` requests when opening files directly via `file://`. A local static HTTP server or static web host (like GitHub Pages or Netlify) is required.
