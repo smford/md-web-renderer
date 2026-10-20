@@ -27,7 +27,7 @@
     }
 
     @media (prefers-color-scheme: dark) {
-      :root {
+      :root:not([data-theme="light"]) {
         --bg: #0d1117;
         --text: #e6edf3;
         --muted: #848d97;
@@ -36,6 +36,26 @@
         --code-bg: #161b22;
         --accent: #238636;
       }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #0d1117;
+      --text: #e6edf3;
+      --muted: #848d97;
+      --border: #30363d;
+      --link: #4493f8;
+      --code-bg: #161b22;
+      --accent: #238636;
+    }
+
+    :root[data-theme="light"] {
+      --bg: #ffffff;
+      --text: #1f2328;
+      --muted: #656d76;
+      --border: #d0d7de;
+      --link: #0969da;
+      --code-bg: #f6f8fa;
+      --accent: #2da44e;
     }
 
     * { box-sizing: border-box; }
@@ -124,7 +144,7 @@
       color: var(--muted);
     }
 
-    /* Layout Grid & Sticky TOC Sidebar */
+    /* Layout Grid & Sticky Sidebar Navigation */
     .layout-wrapper {
       width: 100%;
       max-width: 1140px;
@@ -134,10 +154,20 @@
       padding: 2rem 1.5rem 6rem;
       justify-content: center;
       align-items: start;
+      transition: max-width 0.2s ease;
+    }
+
+    .layout-wrapper.has-sidebar {
+      max-width: 1400px;
+      grid-template-columns: 240px minmax(0, 820px) 240px;
     }
 
     .layout-wrapper.toc-collapsed {
       grid-template-columns: minmax(0, 820px);
+    }
+
+    .layout-wrapper.has-sidebar.toc-collapsed {
+      grid-template-columns: 240px minmax(0, 820px);
     }
 
     .layout-wrapper.toc-collapsed .toc-sidebar {
@@ -147,6 +177,62 @@
     main {
       width: 100%;
       min-width: 0;
+    }
+
+    .doc-sidebar {
+      position: sticky;
+      top: 4.5rem;
+      max-height: calc(100vh - 6rem);
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      padding-right: 1.25rem;
+      font-size: 0.85rem;
+    }
+
+    .sidebar-header {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .sidebar-nav ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    .sidebar-nav ul ul {
+      padding-left: 1rem;
+      margin: 0.25rem 0;
+    }
+
+    .sidebar-nav li {
+      margin: 0.25rem 0;
+    }
+
+    .sidebar-nav a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: block;
+      line-height: 1.4;
+      transition: color 0.15s, background-color 0.15s;
+    }
+
+    .sidebar-nav a:hover {
+      color: var(--text);
+      background: var(--code-bg);
+      text-decoration: none;
+    }
+
+    .sidebar-nav a.is-active {
+      color: var(--link);
+      font-weight: 600;
+      background: var(--code-bg);
     }
 
     .toc-sidebar {
@@ -202,8 +288,26 @@
     .toc-link.depth-4 { padding-left: 2rem; font-size: 0.73rem; }
 
     @media (max-width: 1024px) {
-      .layout-wrapper { grid-template-columns: minmax(0, 820px); }
+      .layout-wrapper, .layout-wrapper.has-sidebar, .layout-wrapper.has-sidebar.toc-collapsed {
+        grid-template-columns: minmax(0, 820px);
+      }
       .toc-sidebar { display: none; }
+      .doc-sidebar {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 3.5rem;
+        bottom: 0;
+        width: 280px;
+        background: var(--bg);
+        z-index: 30;
+        border-right: 1px solid var(--border);
+        box-shadow: 4px 0 16px rgba(0,0,0,0.15);
+        padding: 1.5rem;
+      }
+      .doc-sidebar.is-open {
+        display: block !important;
+      }
     }
 
     /* Heading Anchors & Deep-linking */
@@ -630,7 +734,10 @@
 <body>
 
   <header>
-    <div class="brand"><a href="#index.md">Documentation</a></div>
+    <div class="brand">
+      <button class="btn-toggle" id="btn-toggle-sidebar" title="Toggle Navigation Sidebar" style="display:none; margin-right: 0.5rem; padding: 0.25rem 0.55rem; font-size: 0.85rem;">☰</button>
+      <a href="#index.md" id="site-title">Documentation</a>
+    </div>
     <div class="nav-actions">
       <span id="file-breadcrumb">index.md</span>
       <button class="btn-toggle" id="btn-search" title="Search documentation (⌘K / Ctrl+K)">
@@ -639,10 +746,17 @@
       </button>
       <button class="btn-toggle" id="btn-toggle-graph" title="Toggle Document Node Map">Node Map</button>
       <button class="btn-toggle" id="btn-toggle-toc" title="Toggle Table of Contents">TOC</button>
+      <button class="btn-toggle" id="btn-toggle-theme" title="Toggle theme (Light / Dark)" aria-label="Toggle theme">☀️</button>
     </div>
   </header>
 
   <div class="layout-wrapper" id="layout-wrapper">
+    <!-- Left Navigation Sidebar (rendered when _sidebar.md or SUMMARY.md exists) -->
+    <aside id="doc-sidebar" class="doc-sidebar" style="display:none;">
+      <div class="sidebar-header">Navigation</div>
+      <nav id="sidebar-nav" class="sidebar-nav"></nav>
+    </aside>
+
     <main>
       <!-- Document Topology Node Map Panel -->
       <div id="graph-view-panel">
@@ -947,16 +1061,164 @@ Click the links below to verify parent traversal and compound hash deep-linking 
     const docIndex = new Map();
     const indexedUrls = new Set();
 
-    // Theme awareness
+    // --- Escape HTML helper ---
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // --- YAML Frontmatter Parser ---
+    function parseFrontmatter(text) {
+      let frontmatter = {};
+      let content = text;
+      const fmRegex = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+      const match = text.match(fmRegex);
+      if (match) {
+        content = text.slice(match[0].length);
+        const yamlLines = match[1].split(/\r?\n/);
+        for (const line of yamlLines) {
+          const colonIdx = line.indexOf(':');
+          if (colonIdx > 0) {
+            const key = line.slice(0, colonIdx).trim();
+            const val = line.slice(colonIdx + 1).trim().replace(/^["']|["']$/g, '');
+            if (key) frontmatter[key] = val;
+          }
+        }
+      }
+      return { frontmatter, content };
+    }
+
+    // --- Theme Management ---
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    function getActiveTheme() {
+      const explicit = document.documentElement.getAttribute('data-theme');
+      if (explicit) return explicit;
+      return prefersDark ? 'dark' : 'light';
+    }
+
+    function initTheme() {
+      const stored = localStorage.getItem('doc-theme');
+      const themeBtn = document.getElementById('btn-toggle-theme');
+
+      function applyTheme(theme) {
+        if (theme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          if (themeBtn) themeBtn.textContent = '🌙';
+        } else if (theme === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          if (themeBtn) themeBtn.textContent = '☀️';
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          if (themeBtn) themeBtn.textContent = prefersDark ? '🌙' : '☀️';
+        }
+      }
+
+      applyTheme(stored);
+
+      if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+          const current = getActiveTheme();
+          const next = current === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('doc-theme', next);
+          applyTheme(next);
+
+          try {
+            mermaid.initialize({
+              startOnLoad: false,
+              theme: next === 'dark' ? 'dark' : 'neutral',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+              securityLevel: 'loose'
+            });
+            if (currentPath) {
+              const hashParts = window.location.hash.split('#');
+              const section = hashParts.length > 2 ? hashParts[2] : (hashParts.length === 2 && !hashParts[1].endsWith('.md') ? hashParts[1] : '');
+              loadMarkdown(currentPath, section);
+            }
+          } catch (_) {}
+        });
+      }
+    }
 
     // Initialize Mermaid
     mermaid.initialize({
       startOnLoad: false,
-      theme: prefersDark ? 'dark' : 'neutral',
+      theme: getActiveTheme() === 'dark' ? 'dark' : 'neutral',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
       securityLevel: 'loose'
     });
+
+    // --- Navigation Sidebar (_sidebar.md / SUMMARY.md) ---
+    async function loadSidebar() {
+      const candidates = ['_sidebar.md', 'SUMMARY.md'];
+      let sidebarText = null;
+
+      for (const file of candidates) {
+        try {
+          const resp = await fetch(file, { cache: 'no-cache' });
+          if (resp.ok) {
+            sidebarText = await resp.text();
+            break;
+          }
+        } catch (_) {}
+      }
+
+      if (!sidebarText) return;
+
+      const docSidebar = document.getElementById('doc-sidebar');
+      const sidebarNav = document.getElementById('sidebar-nav');
+      const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+      const layout = document.getElementById('layout-wrapper');
+
+      if (!docSidebar || !sidebarNav) return;
+
+      const rawHtml = marked.parse(sidebarText);
+      const cleanHtml = DOMPurify.sanitize(rawHtml);
+      sidebarNav.innerHTML = cleanHtml;
+
+      sidebarNav.querySelectorAll('a').forEach(link => {
+        let href = link.getAttribute('href') || '';
+        if (href && !href.startsWith('http://') && !href.startsWith('https://') && !href.startsWith('#')) {
+          if (href.endsWith('.md') || href.includes('.md#')) {
+            link.setAttribute('href', '#' + href);
+          }
+        }
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 1024) {
+            docSidebar.classList.remove('is-open');
+          }
+        });
+      });
+
+      layout.classList.add('has-sidebar');
+      docSidebar.style.display = 'block';
+      if (btnToggleSidebar) {
+        btnToggleSidebar.style.display = 'inline-flex';
+        btnToggleSidebar.onclick = () => {
+          docSidebar.classList.toggle('is-open');
+        };
+      }
+
+      updateSidebarActiveLink();
+    }
+
+    function updateSidebarActiveLink() {
+      const sidebarNav = document.getElementById('sidebar-nav');
+      if (!sidebarNav) return;
+      sidebarNav.querySelectorAll('a').forEach(link => {
+        const href = link.getAttribute('href') || '';
+        const target = href.replace(/^#/, '').split('#')[0];
+        if (target && target === currentPath) {
+          link.classList.add('is-active');
+        } else {
+          link.classList.remove('is-active');
+        }
+      });
+    }
 
     // Custom Marked extension to isolate Mermaid blocks
     const renderer = {
@@ -1242,12 +1504,22 @@ Click the links below to verify parent traversal and compound hash deep-linking 
       try {
         let networkText = null;
         try {
-          const response = await fetch(filePath, { cache: "no-cache" });
+          let response = await fetch(filePath, { cache: "no-cache" });
+          if (!response.ok && (filePath === 'index.md' || filePath === '')) {
+            try {
+              const readmeResp = await fetch('README.md', { cache: 'no-cache' });
+              if (readmeResp.ok) {
+                response = readmeResp;
+                filePath = 'README.md';
+                breadcrumbEl.textContent = 'README.md';
+              }
+            } catch (_) {}
+          }
           if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to load ${filePath}`);
           networkText = await response.text();
         } catch (fetchErr) {
           const embedded = getEmbeddedDocument(filePath);
-          if (embedded) {
+          if (isFileProtocol && embedded) {
             networkText = embedded;
           } else {
             throw fetchErr;
@@ -1290,22 +1562,29 @@ Click the links below to verify parent traversal and compound hash deep-linking 
           : "";
 
         contentEl.innerHTML = `
-          <div class="state-banner" style="color: #cf222e; border-color: #cf222e; text-align: left;">
-            <strong>Error:</strong> Failed to load <code>${filePath}</code> (${err.message})
+          <div class="state-banner" style="border-left: 4px solid #cf222e; padding: 1.5rem; background: var(--code-bg); border-radius: 6px; text-align: left;">
+            <h2 style="margin-top: 0; font-size: 1.25rem; color: var(--text);">Document Not Found (404)</h2>
+            <p style="margin: 0.5rem 0; color: var(--muted); font-size: 0.9rem;">
+              Could not load <code>${escapeHtml(filePath)}</code>.
+            </p>
             ${advice}
-            <div style="margin-top: 1rem;">
-              <a href="#index.md" style="color: var(--link);">Return to home (index.md)</a>
+            <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+              <a href="#index.md" class="btn-toggle" style="text-decoration: none;">← Return to Home</a>
+              <button type="button" class="btn-toggle" onclick="document.getElementById('btn-search').click()">Search Docs (⌘K)</button>
             </div>
           </div>
         `;
+        tocNav.innerHTML = '';
+        currentContentHash = '';
       }
     }
 
     // --- Document Rendering Pipeline ---
     async function renderDocumentContent(filePath, markdownText, isCached, targetSectionId) {
-      indexDocument(filePath, markdownText);
+      const { frontmatter, content: cleanMarkdown } = parseFrontmatter(markdownText);
+      indexDocument(filePath, cleanMarkdown);
 
-      const rawHtml = marked.parse(markdownText);
+      const rawHtml = marked.parse(cleanMarkdown);
       const sanitized = DOMPurify.sanitize(rawHtml, {
         ADD_TAGS: ['svg', 'g', 'path', 'rect', 'circle', 'text', 'line', 'polygon', 'foreignObject'],
         ADD_ATTR: ['viewBox', 'd', 'fill', 'stroke', 'transform', 'marker-end', 'x', 'y', 'width', 'height']
@@ -1313,7 +1592,10 @@ Click the links below to verify parent traversal and compound hash deep-linking 
       contentEl.innerHTML = parseGitHubAlerts(sanitized);
 
       const h1 = contentEl.querySelector('h1');
-      document.title = h1 ? `${h1.textContent} - Docs` : `${filePath} - Docs`;
+      const docTitle = frontmatter.title || (h1 ? h1.textContent : filePath);
+      const siteTitle = document.getElementById('site-title')?.textContent || 'Documentation';
+      document.title = `${docTitle} · ${siteTitle}`;
+      breadcrumbEl.textContent = frontmatter.title || filePath;
 
       processHeadings(contentEl, filePath);
       buildTableOfContents(contentEl, filePath);
@@ -1625,14 +1907,15 @@ Click the links below to verify parent traversal and compound hash deep-linking 
     }
 
     function indexDocument(filePath, markdownText) {
+      const { frontmatter, content: cleanMarkdown } = parseFrontmatter(markdownText);
       const headings = [];
       const headingRegex = /^(#{1,6})\s+(.+)$/gm;
       let match;
-      let title = filePath;
+      let title = frontmatter.title || filePath;
 
-      while ((match = headingRegex.exec(markdownText)) !== null) {
+      while ((match = headingRegex.exec(cleanMarkdown)) !== null) {
         const text = match[2].trim();
-        if (headings.length === 0 && match[1].length === 1) title = text;
+        if (!frontmatter.title && headings.length === 0 && match[1].length === 1) title = text;
         headings.push(text);
       }
 
@@ -1640,7 +1923,7 @@ Click the links below to verify parent traversal and compound hash deep-linking 
         path: filePath,
         title,
         headings,
-        text: stripMarkdown(markdownText)
+        text: stripMarkdown(cleanMarkdown)
       });
       indexedUrls.add(filePath);
     }
@@ -1904,10 +2187,12 @@ Click the links below to verify parent traversal and compound hash deep-linking 
 
       if (filePath === currentPath && contentEl.querySelector('h1, h2, h3')) {
         scrollToSection(sectionId);
+        updateSidebarActiveLink();
         return;
       }
 
       await loadMarkdown(filePath, sectionId);
+      updateSidebarActiveLink();
     }
 
     // Warm-up search index with embedded fallback documents
@@ -1918,6 +2203,9 @@ Click the links below to verify parent traversal and compound hash deep-linking 
         indexDocument(path, text);
       }
     });
+
+    initTheme();
+    loadSidebar();
 
     window.addEventListener('hashchange', handleRouting);
     if (document.readyState === 'loading') {

@@ -1,3 +1,8 @@
+---
+title: Platform Documentation
+description: Demo and feature showcase for md-web-renderer
+---
+
 # System Architecture & Platform Documentation
 
 Welcome to the zero-build documentation engine. This `index.md` file serves as a comprehensive test suite for routing, graphical diagram rendering, scroll-spy navigation, offline caching, and full-text search.

@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate YAML files
+        run: |
+          ruby -ryaml -e "
+            ['action.yml', '.github/workflows/deploy.yml', '.github/workflows/release.yml', '.github/workflows/deploy-pages.yml', '.github/workflows/ci.yml'].each do |f|
+              YAML.load_file(f)
+              puts \"#{f}: valid\"
+            end
+          "
+
+      - name: Validate JavaScript in index.html
+        run: |
+          node -e "
+            const fs = require('fs');
+            const html = fs.readFileSync('index.html', 'utf8');
+            const scriptMatches = [...html.matchAll(/<script(?![^>]*type=[\"']text\/markdown[\"'])[^>]*>([\s\S]*?)<\/script>/gi)];
+            for (const [i, match] of scriptMatches.entries()) {
+              const code = match[1];
+              if (code.trim()) {
+                new Function(code);
+                console.log('Script block ' + i + ' syntax: OK');
+              }
+            }
+          "
+
+      - name: Check demo sync
+        run: |
+          diff -u index.html demo/index.html || {
+            echo "demo/index.html is out of sync with index.html"
+            exit 1
+          }

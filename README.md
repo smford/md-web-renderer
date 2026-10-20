@@ -12,12 +12,15 @@ A zero-build, single-file documentation engine that turns folders of Markdown fi
 
 - **Eliminates complex build toolchains:** Traditional documentation generators (e.g., Docusaurus, VitePress, MkDocs) require Node.js/Python setups, package managers, dependency trees, and build steps. `md-web-renderer` requires zero setup and zero dependencies—just a single HTML file.
 - **Prevents doc & code drift:** Documentation remains pure, standard GitHub Markdown files (`.md`). They stay readable in plain text editors, GitHub repos, and IDEs without proprietary templates or component syntax.
-- **Provides rich features out of the box:** You get modern docs features—syntax highlighting, interactive vector diagrams, command palette search, and table of contents—without configuring plugins or maintaining a web app.
+- **Provides rich features out of the box:** You get modern docs features—syntax highlighting, interactive vector diagrams, command palette search, table of contents, and sidebar navigation—without configuring plugins or maintaining a web app.
 - **Works offline & loads instantly:** Uses in-browser caching (Stale-While-Revalidate) so navigating between documents is instant and previously viewed documents remain available offline.
 
 ## Key Features
 
 - **Zero-Build & Single File:** Entire engine is contained in `index.html` via lightweight CDN scripts.
+- **YAML Frontmatter Support:** Automatically strips frontmatter (`title:`, `description:`) and uses it for browser tab titles and breadcrumbs.
+- **Navigation Sidebar (`_sidebar.md` / `SUMMARY.md`):** Optional left navigation tree (Docsify/GitBook style) with active link tracking and mobile drawer.
+- **Dark / Light Mode Switcher:** One-click header toggle with local persistence and adaptive Mermaid diagrams.
 - **GitHub Flavored Markdown:** Supports tables, task lists, and GitHub callouts (`[!NOTE]`, `[!TIP]`, `[!WARNING]`, etc.).
 - **Interactive Mermaid Diagrams:** Automatically renders Mermaid diagrams with pan, zoom, reset, and one-click SVG/PNG exports.
 - **Fast In-Memory Search (`⌘K` / `Ctrl+K`):** Full-text search and command palette with weighted ranking across titles, headings, and content.
@@ -84,8 +87,10 @@ jobs:
   deploy:
     uses: smford/md-web-renderer/.github/workflows/deploy.yml@v1
     with:
-      path: 'docs' # Path to markdown folder (defaults to '.' for root)
-      fallback-readme: true # If index.md is missing, uses README.md automatically
+      path: 'docs'               # Path to markdown folder (defaults to '.' for root)
+      title: 'My Project Docs'   # Optional: custom site title & brand name
+      cname: 'docs.example.com'  # Optional: custom domain for GitHub Pages
+      fallback-readme: true      # Automatically fallback to README.md if index.md is missing
 ```
 
 ### Option 2: GitHub Action Step (For Custom Workflows)
@@ -96,7 +101,10 @@ If you have an existing workflow or build pipeline, add `md-web-renderer` as a s
 - name: Setup Documentation with md-web-renderer
   uses: smford/md-web-renderer@v1
   with:
-    path: 'docs' # Path to markdown directory (defaults to '.')
+    path: 'docs'                 # Path to markdown directory (defaults to '.')
+    title: 'My Project Docs'     # Optional: custom site title
+    cname: 'docs.example.com'    # Optional: custom domain (CNAME)
+    custom-css: 'docs/theme.css' # Optional: inject custom stylesheet
     fallback-readme: 'true'
 
 - name: Deploy to GitHub Pages
@@ -113,6 +121,23 @@ Download `index.html` from the [Latest Release](https://github.com/smford/md-web
 curl -sSL https://github.com/smford/md-web-renderer/releases/latest/download/index.html -o docs/index.html
 touch docs/.nojekyll
 ```
+
+---
+
+## Organizing Multi-Page Docs (`_sidebar.md`)
+
+To display a persistent left navigation sidebar, add a `_sidebar.md` (or `SUMMARY.md`) to your docs directory with a standard markdown list:
+
+```markdown
+* [Home](index.md)
+* [Getting Started](getting-started.md)
+* Architecture
+  * [System Overview](architecture/overview.md)
+  * [Security Model](architecture/security.md)
+* [API Reference](api/reference.md)
+```
+
+`md-web-renderer` will automatically render the collapsible sidebar, track the current page, and provide a mobile drawer toggle.
 
 ---
 

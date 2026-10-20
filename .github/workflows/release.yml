@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g., v1.0.0)'
+        description: 'Tag to release (e.g., v1.1.0)'
         required: true
         type: string
 
@@ -40,8 +40,12 @@ jobs:
           # Compute sha256 checksum for standalone index.html
           shasum -a 256 index.html > index.html.sha256
 
+          # Minify index.html
+          python3 -c "import re; c = open('index.html', 'r', encoding='utf-8').read(); c = re.sub(r'<!--(?!\[if|<!)[^>]*?-->', '', c); c = re.sub(r'\n\s*\n', '\n', c); open('index.min.html', 'w', encoding='utf-8').write(c)"
+          shasum -a 256 index.min.html > index.min.html.sha256
+
           # Package standalone archive
-          zip -9 "md-web-renderer-${TAG}.zip" index.html README.md index.html.sha256
+          zip -9 "md-web-renderer-${TAG}.zip" index.html index.min.html README.md index.html.sha256 index.min.html.sha256
 
       - name: Publish GitHub Release
         env:
@@ -54,12 +58,16 @@ jobs:
             gh release upload "$TAG" \
               index.html \
               index.html.sha256 \
+              index.min.html \
+              index.min.html.sha256 \
               "md-web-renderer-${TAG}.zip" \
               --clobber
           else
             gh release create "$TAG" \
               index.html \
               index.html.sha256 \
+              index.min.html \
+              index.min.html.sha256 \
               "md-web-renderer-${TAG}.zip" \
               --title "Release $TAG" \
               --generate-notes
@@ -69,7 +77,7 @@ jobs:
         run: |
           TAG="${{ steps.vars.outputs.tag }}"
 
-          # Check if tag is semver-formatted (e.g., v1.0.0 or v1.2.3)
+          # Check if tag is semver-formatted (e.g., v1.0.0 or v1.1.0)
           if [[ "$TAG" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+ ]]; then
             MAJOR_TAG="v${BASH_REMATCH[1]}"
             echo "Updating floating major tag: $MAJOR_TAG -> $TAG"

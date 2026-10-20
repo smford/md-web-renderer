@@ -10,6 +10,18 @@ inputs:
     description: 'Path to the directory containing markdown documentation files'
     required: false
     default: '.'
+  title:
+    description: 'Custom site title and brand name'
+    required: false
+    default: ''
+  cname:
+    description: 'Custom domain (CNAME) for GitHub Pages (e.g. docs.example.com)'
+    required: false
+    default: ''
+  custom-css:
+    description: 'Path to an optional custom CSS stylesheet to inject'
+    required: false
+    default: ''
   fallback-readme:
     description: 'If index.md does not exist in target path, copy README.md to index.md'
     required: false
@@ -33,6 +45,22 @@ runs:
 
         # Prevent GitHub Pages from processing markdown through Jekyll
         touch "$TARGET_DIR/.nojekyll"
+
+        # Optional site title customization
+        if [ -n "${{ inputs.title }}" ]; then
+          python3 -c "import sys; p, t = sys.argv[1], sys.argv[2]; open(p, 'w', encoding='utf-8').write(open(p, 'r', encoding='utf-8').read().replace('<title>Documentation</title>', f'<title>{t}</title>').replace('<a href=\"#index.md\" id=\"site-title\">Documentation</a>', f'<a href=\"#index.md\" id=\"site-title\">{t}</a>'))" "$TARGET_DIR/index.html" "${{ inputs.title }}"
+        fi
+
+        # Optional custom CSS injection
+        if [ -n "${{ inputs.custom-css }}" ] && [ -f "${{ inputs.custom-css }}" ]; then
+          cp "${{ inputs.custom-css }}" "$TARGET_DIR/custom.css"
+          python3 -c "import sys; p = sys.argv[1]; open(p, 'w', encoding='utf-8').write(open(p, 'r', encoding='utf-8').read().replace('</head>', '<link rel=\"stylesheet\" href=\"custom.css\">\n</head>'))" "$TARGET_DIR/index.html"
+        fi
+
+        # Optional CNAME for custom domains
+        if [ -n "${{ inputs.cname }}" ]; then
+          echo "${{ inputs.cname }}" > "$TARGET_DIR/CNAME"
+        fi
 
         # Fallback: copy README.md to index.md if index.md does not exist
         if [ "${{ inputs.fallback-readme }}" = "true" ]; then
