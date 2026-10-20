@@ -162,6 +162,18 @@
       grid-template-columns: 240px minmax(0, 820px) 240px;
     }
 
+    .layout-wrapper.has-sidebar.sidebar-collapsed {
+      grid-template-columns: minmax(0, 820px) 240px;
+    }
+
+    .layout-wrapper.has-sidebar.sidebar-collapsed.toc-collapsed {
+      grid-template-columns: minmax(0, 820px);
+    }
+
+    .layout-wrapper.has-sidebar.sidebar-collapsed .doc-sidebar {
+      display: none !important;
+    }
+
     .layout-wrapper.toc-collapsed {
       grid-template-columns: minmax(0, 820px);
     }
@@ -177,6 +189,19 @@
     main {
       width: 100%;
       min-width: 0;
+    }
+
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 25;
+      backdrop-filter: blur(2px);
+    }
+
+    .sidebar-backdrop.is-active {
+      display: block;
     }
 
     .doc-sidebar {
@@ -196,6 +221,26 @@
       font-size: 0.7rem;
       color: var(--muted);
       margin-bottom: 0.6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sidebar-close-btn {
+      display: none;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .sidebar-close-btn:hover {
+      color: var(--text);
+      background: var(--code-bg);
+      border-color: var(--border);
     }
 
     .sidebar-nav ul {
@@ -292,6 +337,7 @@
         grid-template-columns: minmax(0, 820px);
       }
       .toc-sidebar { display: none; }
+      .sidebar-close-btn { display: inline-block; }
       .doc-sidebar {
         display: none;
         position: fixed;
@@ -302,8 +348,9 @@
         background: var(--bg);
         z-index: 30;
         border-right: 1px solid var(--border);
-        box-shadow: 4px 0 16px rgba(0,0,0,0.15);
+        box-shadow: 4px 0 20px rgba(0,0,0,0.2);
         padding: 1.5rem;
+        overflow-y: auto;
       }
       .doc-sidebar.is-open {
         display: block !important;
@@ -735,7 +782,7 @@
 
   <header>
     <div class="brand">
-      <button class="btn-toggle" id="btn-toggle-sidebar" title="Toggle Navigation Sidebar" style="display:none; margin-right: 0.5rem; padding: 0.25rem 0.55rem; font-size: 0.85rem;">☰</button>
+      <button class="btn-toggle btn-menu" id="btn-toggle-sidebar" title="Toggle Navigation Menu (☰)" style="margin-right: 0.5rem; padding: 0.25rem 0.55rem; font-size: 0.85rem;" aria-label="Toggle navigation">☰</button>
       <a href="#index.md" id="site-title">Documentation</a>
     </div>
     <div class="nav-actions">
@@ -750,10 +797,15 @@
     </div>
   </header>
 
+  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
   <div class="layout-wrapper" id="layout-wrapper">
-    <!-- Left Navigation Sidebar (rendered when _sidebar.md or SUMMARY.md exists) -->
-    <aside id="doc-sidebar" class="doc-sidebar" style="display:none;">
-      <div class="sidebar-header">Navigation</div>
+    <!-- Left Navigation Sidebar -->
+    <aside id="doc-sidebar" class="doc-sidebar">
+      <div class="sidebar-header">
+        <span>Navigation</span>
+        <button type="button" class="sidebar-close-btn" id="btn-close-sidebar" aria-label="Close navigation">✕</button>
+      </div>
       <nav id="sidebar-nav" class="sidebar-nav"></nav>
     </aside>
 
@@ -1038,6 +1090,15 @@ Click the links below to verify parent traversal and compound hash deep-linking 
 
   </script>
 
+  <script type="text/markdown" id="doc:_sidebar.md">
+* [Home](index.md)
+* [Getting Started](getting-started.md)
+* [System Architecture](architecture/overview.md)
+  * [Client State Machine](architecture/overview.md#1-client-side-routing-state-machine)
+  * [Resolution Matrix](architecture/overview.md#2-relative-path-resolution-matrix)
+  * [Infrastructure Policy](architecture/overview.md#3-infrastructure-policy-example-opa--rego)
+  </script>
+
   <script>
     // --- Global State & Configuration ---
     const CACHE_NAME = 'docs-cache-v1';
@@ -1134,6 +1195,9 @@ Click the links below to verify parent traversal and compound hash deep-linking 
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
               securityLevel: 'loose'
             });
+            if (isGraphActive) {
+              renderGraphTopology();
+            }
             if (currentPath) {
               const hashParts = window.location.hash.split('#');
               const section = hashParts.length > 2 ? hashParts[2] : (hashParts.length === 2 && !hashParts[1].endsWith('.md') ? hashParts[1] : '');
@@ -1167,11 +1231,30 @@ Click the links below to verify parent traversal and compound hash deep-linking 
         } catch (_) {}
       }
 
-      if (!sidebarText) return;
+      // Check embedded fallback if network fetch was blocked (e.g. file:// protocol)
+      if (!sidebarText) {
+        const embedded = getEmbeddedDocument('_sidebar.md');
+        if (embedded) sidebarText = embedded;
+      }
+
+      // If still no sidebar file exists, automatically generate a navigation list from known documents
+      if (!sidebarText) {
+        const docPaths = Array.from(docIndex.keys()).filter(p => !p.startsWith('_'));
+        if (docPaths.length > 0) {
+          sidebarText = docPaths.map(p => {
+            const doc = docIndex.get(p);
+            return `* [${(doc && doc.title) || p}](${p})`;
+          }).join('\n');
+        } else {
+          sidebarText = '* [Home](index.md)\n* [README](README.md)';
+        }
+      }
 
       const docSidebar = document.getElementById('doc-sidebar');
       const sidebarNav = document.getElementById('sidebar-nav');
       const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+      const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+      const sidebarBackdrop = document.getElementById('sidebar-backdrop');
       const layout = document.getElementById('layout-wrapper');
 
       if (!docSidebar || !sidebarNav) return;
@@ -1190,18 +1273,46 @@ Click the links below to verify parent traversal and compound hash deep-linking 
         link.addEventListener('click', () => {
           if (window.innerWidth <= 1024) {
             docSidebar.classList.remove('is-open');
+            if (sidebarBackdrop) sidebarBackdrop.classList.remove('is-active');
           }
         });
       });
 
       layout.classList.add('has-sidebar');
       docSidebar.style.display = 'block';
+
       if (btnToggleSidebar) {
-        btnToggleSidebar.style.display = 'inline-flex';
-        btnToggleSidebar.onclick = () => {
-          docSidebar.classList.toggle('is-open');
+        btnToggleSidebar.onclick = (e) => {
+          e.stopPropagation();
+          if (window.innerWidth <= 1024) {
+            docSidebar.classList.toggle('is-open');
+            if (sidebarBackdrop) sidebarBackdrop.classList.toggle('is-active', docSidebar.classList.contains('is-open'));
+          } else {
+            layout.classList.toggle('sidebar-collapsed');
+          }
         };
       }
+
+      if (btnCloseSidebar) {
+        btnCloseSidebar.onclick = () => {
+          docSidebar.classList.remove('is-open');
+          if (sidebarBackdrop) sidebarBackdrop.classList.remove('is-active');
+        };
+      }
+
+      if (sidebarBackdrop) {
+        sidebarBackdrop.onclick = () => {
+          docSidebar.classList.remove('is-open');
+          sidebarBackdrop.classList.remove('is-active');
+        };
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && docSidebar.classList.contains('is-open')) {
+          docSidebar.classList.remove('is-open');
+          if (sidebarBackdrop) sidebarBackdrop.classList.remove('is-active');
+        }
+      });
 
       updateSidebarActiveLink();
     }
@@ -1834,9 +1945,14 @@ Click the links below to verify parent traversal and compound hash deep-linking 
 
       function step() {
         if (!isGraphActive) return;
+        const isDark = getActiveTheme() === 'dark';
         ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
 
-        ctx.strokeStyle = prefersDark ? '#30363d' : '#d0d7de';
+        // Fill background explicitly for high contrast in both themes
+        ctx.fillStyle = isDark ? '#161b22' : '#f6f8fa';
+        ctx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+        ctx.strokeStyle = isDark ? '#30363d' : '#d0d7de';
         ctx.lineWidth = 1.5;
         graphEdges.forEach(edge => {
           const src = graphNodes.find(n => n.id === edge.from);
@@ -1873,11 +1989,11 @@ Click the links below to verify parent traversal and compound hash deep-linking 
 
           ctx.beginPath();
           ctx.arc(node.x, node.y, node.type === 'file' ? 8 : (node.type === 'link' ? 6 : 4), 0, Math.PI * 2);
-          ctx.fillStyle = node.type === 'file' ? '#0969da' : (node.type === 'link' ? '#2da44e' : '#848d97');
+          ctx.fillStyle = node.type === 'file' ? '#0969da' : (node.type === 'link' ? '#2da44e' : (isDark ? '#848d97' : '#57606a'));
           ctx.fill();
 
-          ctx.fillStyle = prefersDark ? '#e6edf3' : '#1f2328';
-          ctx.font = '11px sans-serif';
+          ctx.fillStyle = isDark ? '#e6edf3' : '#1f2328';
+          ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
           ctx.fillText(node.label, node.x + 10, node.y + 4);
         });
 

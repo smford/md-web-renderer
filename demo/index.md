@@ -164,3 +164,53 @@ To test multi-file navigation, the background search crawler, and the **Node Map
 * [Getting Started Guide](getting-started.md) — Test sibling file routing (`#getting-started.md`).
 * [System Architecture Overview](architecture/overview.md) — Test subdirectory path resolution (`#architecture/overview.md`).
 * [API Reference: Authentication](api/reference.md#authentication) — Test cross-document deep linking (`#api/reference.md#authentication`).
+
+---
+
+## 6. New Features & Configuration Guide
+
+Here is how to take full advantage of the newest `md-web-renderer` capabilities:
+
+### YAML Frontmatter
+
+Add metadata at the very beginning of any `.md` file. It will be parsed, cleanly stripped from the body, and used to customize the browser title, breadcrumb label, and search ranking:
+
+```yaml
+---
+title: My Custom Document Title
+description: High-level overview of the architecture
+---
+```
+
+### Navigation Sidebar (`_sidebar.md` / `SUMMARY.md`)
+
+Place a `_sidebar.md` file in your documentation directory. Use a standard markdown nested list to build your navigation hierarchy:
+
+```markdown
+* [Home](index.md)
+* [Getting Started](getting-started.md)
+* System Architecture
+  * [Overview](architecture/overview.md)
+  * [Security Model](architecture/security.md)
+* [API Reference](api/reference.md)
+```
+
+The top-left **`☰`** button lets readers collapse the sidebar on desktop for a distraction-free view, or open a slide-out drawer on mobile screens.
+
+### Light & Dark Theme Toggle
+
+Use the **☀️ / 🌙** button in the top navigation bar to toggle themes. The theme selection is saved in `localStorage`, and all Mermaid diagrams and interactive Node Maps automatically re-render with matching high-contrast color palettes.
+
+### GitHub Actions Customization
+
+Configure your GitHub Actions deployment with custom branding, custom domains, or custom CSS:
+
+```yaml
+- name: Deploy Docs
+  uses: smford/md-web-renderer@v1
+  with:
+    path: 'docs'
+    title: 'My Project Docs'    # Custom header brand and page title
+    cname: 'docs.example.com'   # Custom domain for GitHub Pages
+    custom-css: 'theme.css'     # Custom stylesheet injection
+```
