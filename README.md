@@ -19,7 +19,15 @@ A zero-build, single-file documentation engine that turns folders of Markdown fi
 
 - **Zero-Build & Single File:** Entire engine is contained in `index.html` via lightweight CDN scripts.
 - **Accessibility & WCAG 2.2 Standards:** Designed using guidance from the GOV.UK (GDS) Design System—features keyboard skip links, high-contrast focus rings, underlined links, readable measure (75ch), keyboard-scrollable tables, reduced-motion honor, and screen-reader live announcements.
-- **YAML Frontmatter Support:** Automatically strips frontmatter (`title:`, `description:`) and uses it for browser tab titles and breadcrumbs.
+- **Previous / Next Sequential Navigation:** Automatically calculates and renders accessible previous and next page link cards at the bottom of every document based on your `_sidebar.md` sequence.
+- **Reading Time & Word Count:** Displays estimated reading duration and word count under each document header.
+- **Keyboard Shortcuts (`?`):** Rapid navigation with vim-style and docs shortcuts (`t` theme toggle, `m` node map, `[` / `]` or `j` / `k` previous/next page, `/` or `⌘K` search, `?` cheat sheet).
+- **Tabbed Content & Multi-Language Code Tabs:** Multi-tab code snippets and platform options (`::: tabs` / `<!-- tabs:start -->`) with keyboard navigation and ARIA tablist roles.
+- **Click-to-Zoom Image Lightbox:** Interactive modal overlay for diagrams and screenshots with zoom, pan, and escape-to-close.
+- **Smart 404 with Fuzzy Suggestions:** When an internal link or route fails, suggests close filename matches using fuzzy string matching.
+- **Executive Print & PDF Stylesheet (`@media print`):** Formats documents cleanly for `⌘P` export with hidden sidebars/toolbars and expanded tables/code blocks.
+- **"Edit this page on GitHub" Integration:** Automatic header repository link and footer edit link pointing directly to your markdown file on GitHub.
+- **YAML Frontmatter Support:** Automatically strips frontmatter (`title:`, `description:`, `date:`) and uses it for browser tab titles, breadcrumbs, and metadata.
 - **Navigation Sidebar (`_sidebar.md` / `SUMMARY.md`):** Optional left navigation tree (Docsify/GitBook style) with active link tracking and mobile drawer.
 - **Dark / Light Mode Switcher:** One-click header toggle with local persistence and adaptive Mermaid diagrams.
 - **GitHub Flavored Markdown:** Supports tables, task lists, and GitHub callouts (`[!NOTE]`, `[!TIP]`, `[!WARNING]`, etc.).
@@ -105,9 +113,11 @@ If you have an existing workflow or build pipeline, add `md-web-renderer` as a s
   with:
     path: 'docs'                 # Path to markdown directory (defaults to '.')
     title: 'My Project Docs'     # Optional: custom site title
+    repo-url: 'https://github.com/my-org/my-project' # Optional: repo link for header & Edit on GitHub footer
     cname: 'docs.example.com'    # Optional: custom domain (CNAME)
     custom-css: 'docs/theme.css' # Optional: inject custom stylesheet
-    fallback-readme: 'true'
+    fallback-readme: 'true'      # Automatically fallback to README.md if index.md is missing
+    check-links: 'true'          # Check relative markdown links for 404s during deployment
 
 - name: Deploy to GitHub Pages
   uses: actions/deploy-pages@v4

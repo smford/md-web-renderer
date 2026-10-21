@@ -26,6 +26,14 @@ inputs:
     description: 'If index.md does not exist in target path, copy README.md to index.md'
     required: false
     default: 'true'
+  repo-url:
+    description: 'Custom repository URL for GitHub corner badge and Edit on GitHub link (defaults to github.server_url/github.repository)'
+    required: false
+    default: ''
+  check-links:
+    description: 'Validate relative markdown links for 404s before deploying'
+    required: false
+    default: 'true'
   upload-pages-artifact:
     description: 'Whether to automatically upload the GitHub Pages artifact ready for deployment'
     required: false
@@ -73,6 +81,42 @@ runs:
               cp "README.md" "$TARGET_DIR/index.md"
             fi
           fi
+        fi
+
+        # Optional repo URL injection for GitHub badge and Edit on GitHub link
+        REPO_URL="${{ inputs.repo-url }}"
+        if [ -z "$REPO_URL" ] && [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ]; then
+          REPO_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+        fi
+        if [ -n "$REPO_URL" ]; then
+          python3 -c "import sys; p, u = sys.argv[1], sys.argv[2]; open(p, 'w', encoding='utf-8').write(open(p, 'r', encoding='utf-8').read().replace('</head>', f'<meta name=\"repo-url\" content=\"{u}\">\n</head>'))" "$TARGET_DIR/index.html" "$REPO_URL"
+        fi
+
+        # Optional link validation check
+        if [ "${{ inputs.check-links }}" = "true" ]; then
+          python3 -c "
+          import os, sys, re, glob
+          target_dir = sys.argv[1]
+          broken = []
+          md_files = glob.glob(os.path.join(target_dir, '**/*.md'), recursive=True)
+          for f in md_files:
+              content = open(f, 'r', encoding='utf-8', errors='ignore').read()
+              for m in re.finditer(r'\[(?:[^\]]+)\]\(([^)]+)\)', content):
+                  link = m.group(1).split('#')[0]
+                  if link and not link.startswith(('http://', 'https://', 'mailto:', '#', 'data:')):
+                      base = os.path.dirname(f)
+                      resolved = os.path.normpath(os.path.join(base, link))
+                      if not os.path.exists(resolved):
+                          broken.append((f, link))
+          if broken:
+              print('::warning::[md-web-renderer] Found relative links to non-existent files:')
+              for f, link in broken[:10]:
+                  print(f'::warning file={f}::Broken relative link: {link}')
+              if len(broken) > 10:
+                  print(f'::warning::... and {len(broken) - 10} more broken links')
+          else:
+              print('[md-web-renderer] All relative links validated successfully.')
+          " "$TARGET_DIR"
         fi
 
     - name: Upload Pages artifact

@@ -220,6 +220,52 @@ $$\text{Entropy} = -\sum_{i} P(c_i) \log_2 P(c_i)$$
 
 Inline formulas are also supported naturally within text, such as $E = mc^2$ or detection thresholds like $\ge 4.6$ bits per character. Equations are rendered using MathML and vector typography for accessibility and crisp display at all zoom levels.
 
+### Multi-Language Tabbed Code Blocks
+
+Organize multi-package manager commands, multi-language SDK snippets, or alternative platform configurations using clean tabbed containers:
+
+::: tabs
+::: tab cURL
+```bash
+curl -X GET "https://api.example.com/v1/projects" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+::: tab Python
+```python
+import requests
+
+response = requests.get(
+    "https://api.example.com/v1/projects",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+print(response.json())
+```
+::: tab Node.js
+```javascript
+const response = await fetch("https://api.example.com/v1/projects", {
+  headers: { "Authorization": "Bearer YOUR_API_KEY" }
+});
+const data = await response.json();
+console.log(data);
+```
+:::
+
+Tabs are fully keyboard-navigable (`ArrowLeft` / `ArrowRight` / `Home` / `End`) and ARIA-accessible.
+
+### Keyboard Shortcuts
+
+Navigate documentation rapidly without touching the mouse (press `?` to open the modal):
+
+| Key | Action |
+| :--- | :--- |
+| `⌘K` / `Ctrl+K` or `/` | Open search command palette |
+| `t` | Toggle Light / Dark theme |
+| `m` | Toggle interactive Document Node Map |
+| `[` or `j` | Go to previous document in sequence |
+| `]` or `k` | Go to next document in sequence |
+| `?` | Open keyboard shortcuts reference |
+| `Esc` | Close active dialog or menu |
+
 ### GitHub Actions Customization
 
 Configure your GitHub Actions deployment with custom branding, custom domains, or custom CSS:
@@ -230,6 +276,8 @@ Configure your GitHub Actions deployment with custom branding, custom domains, o
   with:
     path: 'docs'
     title: 'My Project Docs'    # Custom header brand and page title
+    repo-url: 'https://github.com/my-org/my-project' # Optional link for Edit on GitHub and header
     cname: 'docs.example.com'   # Custom domain for GitHub Pages
     custom-css: 'theme.css'     # Custom stylesheet injection
+    check-links: 'true'         # Validate relative links in docs during CI
 ```
