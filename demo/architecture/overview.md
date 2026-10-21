@@ -1,6 +1,6 @@
 # System Architecture Overview
 
-[← Back to Home (`../index.md`)](../index.md)
+[← Back to Home](../index.md)
 
 This document resides inside the `architecture/` subdirectory (`#architecture/overview.md`). It tests **relative path resolution**, **subdirectory context**, and **parent directory traversal**.
 
@@ -67,6 +67,6 @@ allow_navigation if {
 
 Click the links below to verify parent traversal and compound hash deep-linking back to the root document:
 
-* [Return to Root Document (`../index.md`)](../index.md)
-* [Jump directly to Root Graphical Diagrams (`../index.md#1-graphical-diagrams-mermaidjs`)](../index.md#1-graphical-diagrams-mermaidjs)
-* [Jump directly to Root Code Highlighting (`../index.md#3-code-highlighting--one-click-copy`)](../index.md#3-code-highlighting--one-click-copy)
+* [Return to Root Document](../index.md)
+* [Jump directly to Root Graphical Diagrams](../index.md#1-graphical-diagrams-mermaidjs)
+* [Jump directly to Root Code Highlighting](../index.md#3-code-highlighting--one-click-copy)

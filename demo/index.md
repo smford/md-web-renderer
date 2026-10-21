@@ -161,9 +161,9 @@ Test intra-document deep linking by clicking this anchor to jump back to [Graphi
 
 To test multi-file navigation, the background search crawler, and the **Node Map** graph edges, create any of the linked files below in your directory:
 
-* [Getting Started Guide](getting-started.md) — Test sibling file routing (`#getting-started.md`).
-* [System Architecture Overview](architecture/overview.md) — Test subdirectory path resolution (`#architecture/overview.md`).
-* [API Reference: Authentication](api/reference.md#authentication) — Test cross-document deep linking (`#api/reference.md#authentication`).
+* [Getting Started Guide](getting-started.md) — Sibling document in the same directory.
+* [System Architecture Overview](architecture/overview.md) — Nested document in a subdirectory testing relative asset and path resolution.
+* [API Reference: Authentication](api/reference.md#authentication) — Cross-document deep link directly into a specific section anchor.
 
 ---
 
