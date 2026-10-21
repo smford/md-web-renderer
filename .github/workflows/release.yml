@@ -90,39 +90,3 @@ jobs:
             git tag -fa "$MAJOR_TAG" -m "Update $MAJOR_TAG to $TAG"
             git push origin "$MAJOR_TAG" --force
           fi
-
-  deploy-pages:
-    needs: release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Prepare demo site using released engine
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ needs.release.outputs.tag }}"
-          echo "Deploying GitHub Pages using released md-web-renderer $TAG..."
-          gh release download "$TAG" --pattern "index.html" --dir demo --clobber
-          cp README.md demo/README.md
-          touch demo/.nojekyll
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './demo'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
