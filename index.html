@@ -17,12 +17,13 @@
     :root {
       --bg: #ffffff;
       --text: #1f2328;
-      --muted: #656d76;
+      --muted: #545d68;
       --border: #d0d7de;
       --link: #0969da;
       --code-bg: #f6f8fa;
-      --accent: #2da44e;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      --accent: #1a7f37;
+      --focus-ring: #0969da;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
     }
 
@@ -30,35 +31,100 @@
       :root:not([data-theme="light"]) {
         --bg: #0d1117;
         --text: #e6edf3;
-        --muted: #848d97;
+        --muted: #8b949e;
         --border: #30363d;
-        --link: #4493f8;
+        --link: #58a6ff;
         --code-bg: #161b22;
         --accent: #238636;
+        --focus-ring: #58a6ff;
       }
     }
 
     :root[data-theme="dark"] {
       --bg: #0d1117;
       --text: #e6edf3;
-      --muted: #848d97;
+      --muted: #8b949e;
       --border: #30363d;
-      --link: #4493f8;
+      --link: #58a6ff;
       --code-bg: #161b22;
       --accent: #238636;
+      --focus-ring: #58a6ff;
     }
 
     :root[data-theme="light"] {
       --bg: #ffffff;
       --text: #1f2328;
-      --muted: #656d76;
+      --muted: #545d68;
       --border: #d0d7de;
       --link: #0969da;
       --code-bg: #f6f8fa;
-      --accent: #2da44e;
+      --accent: #1a7f37;
+      --focus-ring: #0969da;
     }
 
     * { box-sizing: border-box; }
+
+    /* High-contrast focus indicator (WCAG 2.4.7 & 2.4.13 / GDS Principle) */
+    :focus-visible {
+      outline: 3px solid var(--focus-ring) !important;
+      outline-offset: 2px !important;
+      box-shadow: 0 0 0 2px var(--bg);
+    }
+
+    @media (forced-colors: active) {
+      :focus-visible {
+        outline: 3px solid Highlight !important;
+        outline-offset: 3px !important;
+      }
+    }
+
+    /* Skip Link Component (WCAG 2.4.1 Bypass Blocks / GDS Skip Link) */
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 1.5rem;
+      background: var(--text);
+      color: var(--bg);
+      padding: 0.65rem 1.25rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      z-index: 1000;
+      border-radius: 4px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      transition: top 0.15s ease-in-out;
+    }
+
+    .skip-link:focus {
+      top: 1rem;
+    }
+
+    /* Screen reader only utility (WCAG 1.3.1 / GDS .govuk-visually-hidden) */
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    /* Reduced Motion (WCAG 2.3.3) */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      .heading-target-highlight {
+        animation: none !important;
+      }
+    }
     body {
       margin: 0;
       padding: 0;
@@ -401,10 +467,25 @@
       100% { background-color: transparent; }
     }
 
-    /* Content Typography & Elements */
-    #content p { margin: 1rem 0; }
-    #content a { color: var(--link); text-decoration: none; }
-    #content a:hover { text-decoration: underline; }
+    /* Content Typography & Elements (GDS Measure & Readability) */
+    #content {
+      max-width: 75ch;
+      line-height: 1.65;
+    }
+
+    #content p { margin: 1.15rem 0; }
+    
+    #content a {
+      color: var(--link);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      font-weight: 500;
+    }
+    
+    #content a:hover {
+      text-decoration-thickness: 2px;
+    }
 
     #content code:not([class*="language-"]) {
       font-family: var(--font-mono);
@@ -425,7 +506,7 @@
     /* Code Block Copy Button */
     .code-block-wrapper {
       position: relative;
-      margin: 1rem 0;
+      margin: 1.25rem 0;
     }
 
     .code-block-wrapper pre {
@@ -438,10 +519,10 @@
       right: 8px;
       background: var(--bg);
       border: 1px solid var(--border);
-      color: var(--muted);
+      color: var(--text);
       font-family: var(--font-mono);
-      font-size: 0.7rem;
-      padding: 3px 8px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
       border-radius: 4px;
       cursor: pointer;
       opacity: 0;
@@ -468,38 +549,57 @@
       opacity: 1;
     }
 
+    /* Accessible Scrollable Table Container (WCAG 1.3.1 / GDS Tables) */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .table-container:focus-visible {
+      outline: 3px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
     #content table {
       width: 100%;
       border-collapse: collapse;
-      margin: 1.5rem 0;
+      margin: 0;
     }
 
     #content table th, #content table td {
       border: 1px solid var(--border);
-      padding: 8px 12px;
+      padding: 10px 14px;
       text-align: left;
     }
 
-    #content table th { background: var(--code-bg); }
+    #content table th {
+      background: var(--code-bg);
+      font-weight: 600;
+    }
+
     #content img { max-width: 100%; height: auto; border-radius: 6px; }
 
-    /* GitHub-style Callout Alerts */
+    /* GitHub / GDS Inset-style Callout Alerts */
     .markdown-alert {
-      padding: 0.75rem 1rem;
-      margin: 1.2rem 0;
-      border-left: 0.25rem solid var(--border);
+      padding: 0.85rem 1.15rem;
+      margin: 1.5rem 0;
+      border-left: 0.35rem solid var(--border);
       border-radius: 0 6px 6px 0;
       background: var(--code-bg);
     }
 
     .markdown-alert-title {
-      font-weight: 600;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      margin-bottom: 0.25rem;
-      font-size: 0.8rem;
+      gap: 0.45rem;
+      margin-bottom: 0.35rem;
+      font-size: 0.85rem;
       text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .markdown-alert.note { border-left-color: #0969da; }
@@ -512,6 +612,30 @@
     .markdown-alert.important .markdown-alert-title { color: #8250df; }
     .markdown-alert.caution { border-left-color: #cf222e; }
     .markdown-alert.caution .markdown-alert-title { color: #cf222e; }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .markdown-alert.note { border-left-color: #58a6ff; }
+      :root:not([data-theme="light"]) .markdown-alert.note .markdown-alert-title { color: #58a6ff; }
+      :root:not([data-theme="light"]) .markdown-alert.tip { border-left-color: #3fb950; }
+      :root:not([data-theme="light"]) .markdown-alert.tip .markdown-alert-title { color: #3fb950; }
+      :root:not([data-theme="light"]) .markdown-alert.warning { border-left-color: #d29922; }
+      :root:not([data-theme="light"]) .markdown-alert.warning .markdown-alert-title { color: #d29922; }
+      :root:not([data-theme="light"]) .markdown-alert.important { border-left-color: #a371f7; }
+      :root:not([data-theme="light"]) .markdown-alert.important .markdown-alert-title { color: #a371f7; }
+      :root:not([data-theme="light"]) .markdown-alert.caution { border-left-color: #f85149; }
+      :root:not([data-theme="light"]) .markdown-alert.caution .markdown-alert-title { color: #f85149; }
+    }
+
+    :root[data-theme="dark"] .markdown-alert.note { border-left-color: #58a6ff; }
+    :root[data-theme="dark"] .markdown-alert.note .markdown-alert-title { color: #58a6ff; }
+    :root[data-theme="dark"] .markdown-alert.tip { border-left-color: #3fb950; }
+    :root[data-theme="dark"] .markdown-alert.tip .markdown-alert-title { color: #3fb950; }
+    :root[data-theme="dark"] .markdown-alert.warning { border-left-color: #d29922; }
+    :root[data-theme="dark"] .markdown-alert.warning .markdown-alert-title { color: #d29922; }
+    :root[data-theme="dark"] .markdown-alert.important { border-left-color: #a371f7; }
+    :root[data-theme="dark"] .markdown-alert.important .markdown-alert-title { color: #a371f7; }
+    :root[data-theme="dark"] .markdown-alert.caution { border-left-color: #f85149; }
+    :root[data-theme="dark"] .markdown-alert.caution .markdown-alert-title { color: #f85149; }
 
     /* Interactive Diagram Viewport */
     .mermaid-container {
@@ -780,72 +904,83 @@
 </head>
 <body>
 
-  <header>
+  <!-- Skip to main content (WCAG 2.4.1 / GDS Principle) -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header role="banner">
     <div class="brand">
-      <button class="btn-toggle btn-menu" id="btn-toggle-sidebar" title="Toggle Navigation Menu (☰)" style="margin-right: 0.5rem; padding: 0.25rem 0.55rem; font-size: 0.85rem;" aria-label="Toggle navigation">☰</button>
+      <button class="btn-toggle btn-menu" id="btn-toggle-sidebar" title="Toggle Navigation Menu (☰)" style="margin-right: 0.5rem; padding: 0.25rem 0.55rem; font-size: 0.85rem;" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="doc-sidebar">☰</button>
       <a href="#index.md" id="site-title">Documentation</a>
     </div>
-    <div class="nav-actions">
-      <span id="file-breadcrumb">index.md</span>
-      <button class="btn-toggle" id="btn-search" title="Search documentation (⌘K / Ctrl+K)">
+    <nav class="nav-actions" aria-label="Quick tools">
+      <span id="file-breadcrumb" aria-label="Current document">index.md</span>
+      <button class="btn-toggle" id="btn-search" title="Search documentation (⌘K / Ctrl+K)" aria-label="Search documentation (⌘K)" aria-haspopup="dialog" aria-expanded="false" aria-controls="search-modal">
         <span>Search</span>
-        <kbd class="search-kbd">⌘K</kbd>
+        <kbd class="search-kbd" aria-hidden="true">⌘K</kbd>
       </button>
-      <button class="btn-toggle" id="btn-toggle-graph" title="Toggle Document Node Map">Node Map</button>
-      <button class="btn-toggle" id="btn-toggle-toc" title="Toggle Table of Contents">TOC</button>
-      <button class="btn-toggle" id="btn-toggle-theme" title="Toggle theme (Light / Dark)" aria-label="Toggle theme">☀️</button>
-    </div>
+      <button class="btn-toggle" id="btn-toggle-graph" title="Toggle Document Node Map" aria-label="Toggle document node map" aria-expanded="false" aria-controls="graph-view-panel">Node Map</button>
+      <button class="btn-toggle" id="btn-toggle-toc" title="Toggle Table of Contents" aria-label="Toggle table of contents" aria-expanded="true" aria-controls="toc-sidebar">TOC</button>
+      <button class="btn-toggle" id="btn-toggle-theme" title="Toggle theme (Light / Dark)" aria-label="Switch to dark theme">☀️</button>
+    </nav>
   </header>
 
-  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+  <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 
   <div class="layout-wrapper" id="layout-wrapper">
     <!-- Left Navigation Sidebar -->
-    <aside id="doc-sidebar" class="doc-sidebar">
+    <aside id="doc-sidebar" class="doc-sidebar" aria-label="Document navigation">
       <div class="sidebar-header">
         <span>Navigation</span>
-        <button type="button" class="sidebar-close-btn" id="btn-close-sidebar" aria-label="Close navigation">✕</button>
+        <button type="button" class="sidebar-close-btn" id="btn-close-sidebar" aria-label="Close navigation menu">✕</button>
       </div>
-      <nav id="sidebar-nav" class="sidebar-nav"></nav>
+      <nav id="sidebar-nav" class="sidebar-nav" aria-label="Documentation sections"></nav>
     </aside>
 
-    <main>
+    <main id="main-content" role="main" tabindex="-1">
       <!-- Document Topology Node Map Panel -->
-      <div id="graph-view-panel">
-        <canvas id="graph-canvas"></canvas>
-        <div class="graph-caption">Interactive Document Topology: drag nodes or click targets to navigate</div>
+      <div id="graph-view-panel" role="region" aria-label="Document topology graph">
+        <canvas id="graph-canvas" aria-label="Interactive 2D graph of document headings and link connections"></canvas>
+        <div class="graph-caption" aria-hidden="true">Interactive Document Topology: drag nodes or click targets to navigate</div>
       </div>
 
       <!-- Rendered Markdown Article -->
       <article id="content">
-        <div class="state-banner">Loading...</div>
+        <div class="state-banner" role="status">Loading...</div>
       </article>
     </main>
 
     <!-- Sticky Table of Contents Sidebar -->
-    <aside id="toc-sidebar" class="toc-sidebar">
-      <div class="toc-header">On this page</div>
-      <nav id="toc-nav" class="toc-nav"></nav>
+    <aside id="toc-sidebar" class="toc-sidebar" aria-label="Table of contents">
+      <div class="toc-header" id="toc-heading">On this page</div>
+      <nav id="toc-nav" class="toc-nav" aria-labelledby="toc-heading"></nav>
     </aside>
   </div>
 
+  <!-- Screen reader live announcement region for clipboard and status updates -->
+  <div id="sr-announcer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
   <!-- Command Palette Modal -->
-  <div id="search-modal" class="search-modal" hidden>
+  <div id="search-modal" class="search-modal" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title" hidden>
     <div class="search-backdrop" id="search-backdrop"></div>
-    <div class="search-dialog" role="dialog" aria-modal="true" aria-label="Search documentation">
+    <div class="search-dialog">
+      <h2 id="search-dialog-title" class="visually-hidden">Search documentation</h2>
       <div class="search-input-wrapper">
+        <label for="search-input" class="visually-hidden">Search term</label>
         <input 
           type="search" 
           id="search-input" 
           placeholder="Search documents, sections, or keywords..." 
           autocomplete="off" 
           spellcheck="false"
+          aria-autocomplete="list"
+          aria-controls="search-results"
         >
-        <button type="button" class="search-close-btn" id="search-close-btn" title="Close (ESC)">
-          <kbd class="search-kbd">ESC</kbd>
+        <button type="button" class="search-close-btn" id="search-close-btn" title="Close (ESC)" aria-label="Close search dialog">
+          <kbd class="search-kbd" aria-hidden="true">ESC</kbd>
         </button>
       </div>
-      <div id="search-results" class="search-results"></div>
+      <div id="search-live-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div id="search-results" class="search-results" role="listbox" aria-label="Search results"></div>
     </div>
   </div>
 
@@ -1122,6 +1257,15 @@ Click the links below to verify parent traversal and compound hash deep-linking 
     const docIndex = new Map();
     const indexedUrls = new Set();
 
+    // --- Screen Reader Live Announcer (WCAG 4.1.3 / GDS Status Pattern) ---
+    function announce(message) {
+      const el = document.getElementById('sr-announcer');
+      if (el) {
+        el.textContent = '';
+        setTimeout(() => { el.textContent = message; }, 40);
+      }
+    }
+
     // --- Escape HTML helper ---
     function escapeHtml(str) {
       if (!str) return '';
@@ -1169,13 +1313,22 @@ Click the links below to verify parent traversal and compound hash deep-linking 
       function applyTheme(theme) {
         if (theme === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
-          if (themeBtn) themeBtn.textContent = '🌙';
+          if (themeBtn) {
+            themeBtn.textContent = '🌙';
+            themeBtn.setAttribute('aria-label', 'Switch to light theme');
+          }
         } else if (theme === 'light') {
           document.documentElement.setAttribute('data-theme', 'light');
-          if (themeBtn) themeBtn.textContent = '☀️';
+          if (themeBtn) {
+            themeBtn.textContent = '☀️';
+            themeBtn.setAttribute('aria-label', 'Switch to dark theme');
+          }
         } else {
           document.documentElement.removeAttribute('data-theme');
-          if (themeBtn) themeBtn.textContent = prefersDark ? '🌙' : '☀️';
+          if (themeBtn) {
+            themeBtn.textContent = prefersDark ? '🌙' : '☀️';
+            themeBtn.setAttribute('aria-label', prefersDark ? 'Switch to light theme' : 'Switch to dark theme');
+          }
         }
       }
 
@@ -1187,6 +1340,7 @@ Click the links below to verify parent traversal and compound hash deep-linking 
           const next = current === 'dark' ? 'light' : 'dark';
           localStorage.setItem('doc-theme', next);
           applyTheme(next);
+          announce(`Switched to ${next} theme`);
 
           try {
             mermaid.initialize({
@@ -1281,36 +1435,43 @@ Click the links below to verify parent traversal and compound hash deep-linking 
       layout.classList.add('has-sidebar');
       docSidebar.style.display = 'block';
 
+      function setSidebarOpen(isOpen) {
+        if (window.innerWidth <= 1024) {
+          docSidebar.classList.toggle('is-open', isOpen);
+          if (sidebarBackdrop) sidebarBackdrop.classList.toggle('is-active', isOpen);
+        } else {
+          layout.classList.toggle('sidebar-collapsed', !isOpen);
+        }
+        if (btnToggleSidebar) {
+          btnToggleSidebar.setAttribute('aria-expanded', String(isOpen));
+        }
+      }
+
       if (btnToggleSidebar) {
         btnToggleSidebar.onclick = (e) => {
           e.stopPropagation();
-          if (window.innerWidth <= 1024) {
-            docSidebar.classList.toggle('is-open');
-            if (sidebarBackdrop) sidebarBackdrop.classList.toggle('is-active', docSidebar.classList.contains('is-open'));
-          } else {
-            layout.classList.toggle('sidebar-collapsed');
-          }
+          const isCurrentlyOpen = window.innerWidth <= 1024 
+            ? docSidebar.classList.contains('is-open') 
+            : !layout.classList.contains('sidebar-collapsed');
+          setSidebarOpen(!isCurrentlyOpen);
         };
       }
 
       if (btnCloseSidebar) {
         btnCloseSidebar.onclick = () => {
-          docSidebar.classList.remove('is-open');
-          if (sidebarBackdrop) sidebarBackdrop.classList.remove('is-active');
+          setSidebarOpen(false);
+          if (btnToggleSidebar) btnToggleSidebar.focus();
         };
       }
 
       if (sidebarBackdrop) {
-        sidebarBackdrop.onclick = () => {
-          docSidebar.classList.remove('is-open');
-          sidebarBackdrop.classList.remove('is-active');
-        };
+        sidebarBackdrop.onclick = () => setSidebarOpen(false);
       }
 
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && docSidebar.classList.contains('is-open')) {
-          docSidebar.classList.remove('is-open');
-          if (sidebarBackdrop) sidebarBackdrop.classList.remove('is-active');
+          setSidebarOpen(false);
+          if (btnToggleSidebar) btnToggleSidebar.focus();
         }
       });
 
@@ -1440,6 +1601,7 @@ Click the links below to verify parent traversal and compound hash deep-linking 
     btnToggleToc.addEventListener('click', () => {
       isTocCollapsed = !isTocCollapsed;
       layoutWrapper.classList.toggle('toc-collapsed', isTocCollapsed);
+      btnToggleToc.setAttribute('aria-expanded', String(!isTocCollapsed));
     });
 
     // --- One-Click Code Copy Buttons ---
@@ -1479,9 +1641,12 @@ Click the links below to verify parent traversal and compound hash deep-linking 
 
           btn.textContent = 'Copied!';
           btn.classList.add('is-copied');
+          btn.setAttribute('aria-label', 'Code copied to clipboard');
+          announce('Code copied to clipboard');
           setTimeout(() => {
             btn.textContent = 'Copy';
             btn.classList.remove('is-copied');
+            btn.setAttribute('aria-label', 'Copy code to clipboard');
           }, 1800);
         });
 
@@ -1525,13 +1690,25 @@ Click the links below to verify parent traversal and compound hash deep-linking 
       contentEl.prepend(notice);
     }
 
-    // --- GitHub Alerts Parser ---
+    // --- GitHub Alerts Parser (WCAG 1.4.1 / GDS Warning & Inset pattern) ---
     function parseGitHubAlerts(html) {
+      const icons = {
+        NOTE: 'ℹ️',
+        TIP: '💡',
+        WARNING: '⚠️',
+        IMPORTANT: '📌',
+        CAUTION: '🛑'
+      };
       return html.replace(/<blockquote>\s*<p>\[!(NOTE|TIP|WARNING|IMPORTANT|CAUTION)\](?:\s*<br\s*\/?>|\s*)([\s\S]*?)<\/blockquote>/gis, (match, type, body) => {
         const lower = type.toLowerCase();
+        const icon = icons[type] || 'ℹ️';
         return `
-          <div class="markdown-alert ${lower}">
-            <div class="markdown-alert-title">${type}</div>
+          <div class="markdown-alert ${lower}" role="region" aria-label="${type} alert">
+            <div class="markdown-alert-title">
+              <span aria-hidden="true">${icon}</span>
+              <span class="visually-hidden">${type}: </span>
+              <span>${type}</span>
+            </div>
             <div>${body.startsWith("<p>") ? body : "<p>" + body}</div>
           </div>
         `;
@@ -1710,6 +1887,19 @@ Click the links below to verify parent traversal and compound hash deep-linking 
 
       processHeadings(contentEl, filePath);
       buildTableOfContents(contentEl, filePath);
+
+      // Wrap tables in responsive, keyboard-scrollable container (WCAG 1.3.1 / GDS Tables)
+      contentEl.querySelectorAll('table').forEach(table => {
+        if (!table.parentElement.classList.contains('table-container')) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'table-container';
+          wrapper.setAttribute('role', 'region');
+          wrapper.setAttribute('tabindex', '0');
+          wrapper.setAttribute('aria-label', 'Scrollable table');
+          table.parentNode.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+        }
+      });
 
       const baseDir = filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/') + 1) : '';
       contentEl.querySelectorAll('img').forEach(img => {
@@ -1997,7 +2187,9 @@ Click the links below to verify parent traversal and compound hash deep-linking 
           ctx.fillText(node.label, node.x + 10, node.y + 4);
         });
 
-        requestAnimationFrame(step);
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          requestAnimationFrame(step);
+        }
       }
       step();
     }
@@ -2006,6 +2198,7 @@ Click the links below to verify parent traversal and compound hash deep-linking 
       isGraphActive = !isGraphActive;
       graphPanel.style.display = isGraphActive ? 'block' : 'none';
       btnToggleGraph.textContent = isGraphActive ? 'Hide Map' : 'Node Map';
+      btnToggleGraph.setAttribute('aria-expanded', String(isGraphActive));
       if (isGraphActive) renderGraphTopology();
     });
 
@@ -2133,18 +2326,22 @@ Click the links below to verify parent traversal and compound hash deep-linking 
       return results.sort((a, b) => b.score - a.score);
     }
 
-    // --- Search Modal / Command Palette UI ---
+    // --- Search Modal / Command Palette UI (WCAG Combobox Pattern) ---
     const searchModal = document.getElementById('search-modal');
     const searchInput = document.getElementById('search-input');
     const searchResults = document.getElementById('search-results');
     const btnSearch = document.getElementById('btn-search');
     const searchBackdrop = document.getElementById('search-backdrop');
     const searchCloseBtn = document.getElementById('search-close-btn');
+    const searchLiveStatus = document.getElementById('search-live-status');
     let selectedIndex = 0;
+    let lastFocusedElement = null;
 
     function openSearch() {
+      lastFocusedElement = document.activeElement;
       searchModal.removeAttribute('hidden');
       searchModal.hidden = false;
+      if (btnSearch) btnSearch.setAttribute('aria-expanded', 'true');
       searchInput.value = '';
       renderSearchResults([]);
       setTimeout(() => searchInput.focus(), 20);
@@ -2153,11 +2350,25 @@ Click the links below to verify parent traversal and compound hash deep-linking 
     function closeSearch() {
       searchModal.setAttribute('hidden', '');
       searchModal.hidden = true;
+      if (btnSearch) btnSearch.setAttribute('aria-expanded', 'false');
       searchInput.blur();
+      if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+        lastFocusedElement.focus();
+      }
     }
 
     function renderSearchResults(results) {
       selectedIndex = 0;
+      if (searchLiveStatus) {
+        if (searchInput.value.trim()) {
+          searchLiveStatus.textContent = results.length > 0
+            ? `${results.length} result${results.length === 1 ? '' : 's'} available.`
+            : 'No matching documents found.';
+        } else {
+          searchLiveStatus.textContent = '';
+        }
+      }
+
       if (results.length === 0) {
         searchResults.innerHTML = searchInput.value.trim()
           ? `<div class="search-empty">No matching documents found</div>`
@@ -2166,7 +2377,7 @@ Click the links below to verify parent traversal and compound hash deep-linking 
       }
 
       searchResults.innerHTML = results.map((item, idx) => `
-        <div class="search-item ${idx === 0 ? 'is-selected' : ''}" data-target="${item.target}">
+        <div class="search-item ${idx === 0 ? 'is-selected' : ''}" role="option" id="search-opt-${idx}" aria-selected="${idx === 0 ? 'true' : 'false'}" data-target="${item.target}">
           <div class="search-item-header">
             <span class="search-item-title">${DOMPurify.sanitize(item.title)}</span>
             <span class="search-item-path">${item.target}</span>
@@ -2209,8 +2420,13 @@ Click the links below to verify parent traversal and compound hash deep-linking 
 
     function updateSelection(items) {
       items.forEach((item, idx) => {
-        item.classList.toggle('is-selected', idx === selectedIndex);
-        if (idx === selectedIndex) item.scrollIntoView({ block: 'nearest' });
+        const isSel = idx === selectedIndex;
+        item.classList.toggle('is-selected', isSel);
+        item.setAttribute('aria-selected', String(isSel));
+        if (isSel) {
+          item.scrollIntoView({ block: 'nearest' });
+          searchInput.setAttribute('aria-activedescendant', item.id);
+        }
       });
     }
 

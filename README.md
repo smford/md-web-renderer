@@ -18,6 +18,7 @@ A zero-build, single-file documentation engine that turns folders of Markdown fi
 ## Key Features
 
 - **Zero-Build & Single File:** Entire engine is contained in `index.html` via lightweight CDN scripts.
+- **Accessibility & WCAG 2.2 Standards:** Designed using guidance from the GOV.UK (GDS) Design System—features keyboard skip links, high-contrast focus rings, underlined links, readable measure (75ch), keyboard-scrollable tables, reduced-motion honor, and screen-reader live announcements.
 - **YAML Frontmatter Support:** Automatically strips frontmatter (`title:`, `description:`) and uses it for browser tab titles and breadcrumbs.
 - **Navigation Sidebar (`_sidebar.md` / `SUMMARY.md`):** Optional left navigation tree (Docsify/GitBook style) with active link tracking and mobile drawer.
 - **Dark / Light Mode Switcher:** One-click header toggle with local persistence and adaptive Mermaid diagrams.

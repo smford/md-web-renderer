@@ -201,6 +201,17 @@ The top-left **`☰`** button lets readers collapse the sidebar on desktop for a
 
 Use the **☀️ / 🌙** button in the top navigation bar to toggle themes. The theme selection is saved in `localStorage`, and all Mermaid diagrams and interactive Node Maps automatically re-render with matching high-contrast color palettes.
 
+### Accessibility & WCAG 2.2 Standards (GDS-Inspired)
+
+Built with design guidance and accessibility characteristics inspired by the UK Government Digital Service (GDS) Design System:
+
+* **Skip to Main Content Link (`Tab` key):** A hidden skip link appears when tabbing into the page, allowing keyboard users to bypass navigation directly to `#main-content`.
+* **High-Contrast Focus Indicators:** All interactive elements feature thick, dual-layer high-contrast focus rings (`:focus-visible`) that remain visible on any background and in Windows High Contrast / Forced Colors mode.
+* **Readable Measure & Underlined Links:** Text body lines are constrained to optimal reading length (`75ch`), and links within body content feature persistent underlines with offset so color is never the sole visual cue.
+* **Accessible Tables:** Markdown tables are automatically wrapped in a container with keyboard scrollability (`tabindex="0"` and `role="region"`) for horizontal exploration.
+* **Reduced Motion:** Fully honors `prefers-reduced-motion: reduce` by disabling smooth scrolling, animations, and continuous canvas physics.
+* **Screen Reader Live Announcements:** Dynamic actions (copying code snippets, search result counts, theme switches) are announced via an `aria-live="polite"` region.
+
 ### GitHub Actions Customization
 
 Configure your GitHub Actions deployment with custom branding, custom domains, or custom CSS:
