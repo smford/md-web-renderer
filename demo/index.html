@@ -1174,7 +1174,7 @@ stateDiagram-v2
         [*] --> ResolveContext
         ResolveContext: currentPath = "architecture/overview.md"
         ResolveContext: baseDir = "architecture/"
-        ResolveContext --> RewriteAssets: Rewrite <img> & <a> relative to baseDir
+        ResolveContext --> RewriteAssets: Rewrite img & a tags relative to baseDir
     }
 
     SubDir --> SiblingDoc: Click [Security](security.md) -> #architecture/security.md
@@ -1495,8 +1495,12 @@ Click the links below to verify parent traversal and compound hash deep-linking 
     // Custom Marked extension to isolate Mermaid blocks
     const renderer = {
       code(code, lang) {
+        if (typeof code === 'object' && code !== null) {
+          lang = code.lang;
+          code = code.text;
+        }
         if (lang === 'mermaid') {
-          return `<pre class="mermaid">${code}</pre>`;
+          return `<pre class="mermaid">${escapeHtml(code)}</pre>`;
         }
         return false;
       }

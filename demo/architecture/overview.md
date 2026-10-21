@@ -22,7 +22,7 @@ stateDiagram-v2
         [*] --> ResolveContext
         ResolveContext: currentPath = "architecture/overview.md"
         ResolveContext: baseDir = "architecture/"
-        ResolveContext --> RewriteAssets: Rewrite <img> & <a> relative to baseDir
+        ResolveContext --> RewriteAssets: Rewrite img & a tags relative to baseDir
     }
 
     SubDir --> SiblingDoc: Click [Security](security.md) -> #architecture/security.md
