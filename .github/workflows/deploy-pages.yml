@@ -27,10 +27,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare site
+      - name: Prepare site with latest released engine
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Ensure the demo site uses the latest index.html engine from root
-          cp index.html demo/index.html
+          # Fetch index.html from the latest GitHub release
+          if gh release view --repo smford/md-web-renderer > /dev/null 2>&1; then
+            LATEST_TAG=$(gh release view --repo smford/md-web-renderer --json tagName --jq .tagName)
+            echo "Fetching index.html from latest release: $LATEST_TAG..."
+            gh release download "$LATEST_TAG" --repo smford/md-web-renderer --pattern "index.html" --dir demo --clobber
+          else
+            echo "No GitHub release found; using local index.html..."
+            cp index.html demo/index.html
+          fi
           # Copy README.md into the demo site for easy browsing
           cp README.md demo/README.md
           # Bypass Jekyll processing so raw markdown files are served directly

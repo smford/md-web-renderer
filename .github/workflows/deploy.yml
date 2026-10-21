@@ -29,10 +29,10 @@ on:
         type: boolean
         default: true
       engine-version:
-        description: 'Version or branch of md-web-renderer to use'
+        description: 'Version or release tag of md-web-renderer to use (e.g. v1, v1.2.0, or latest)'
         required: false
         type: string
-        default: 'main'
+        default: 'v1'
 
 permissions:
   contents: read
@@ -57,21 +57,25 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Fetch md-web-renderer engine
-        uses: actions/checkout@v4
-        with:
-          repository: 'smford/md-web-renderer'
-          ref: ${{ inputs.engine-version }}
-          path: '.md-web-renderer-tmp'
-
-      - name: Prepare documentation directory
-        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TARGET_DIR="${{ inputs.path }}"
           mkdir -p "$TARGET_DIR"
 
-          # Copy engine and cleanup temporary checkout
-          cp .md-web-renderer-tmp/index.html "$TARGET_DIR/index.html"
-          rm -rf .md-web-renderer-tmp
+          VERSION="${{ inputs.engine-version }}"
+          if [ "$VERSION" = "latest" ] || [ -z "$VERSION" ]; then
+            echo "Downloading index.html from latest GitHub release..."
+            gh release download --repo smford/md-web-renderer --pattern "index.html" --dir "$TARGET_DIR" --clobber
+          else
+            echo "Downloading index.html from release $VERSION..."
+            if gh release download "$VERSION" --repo smford/md-web-renderer --pattern "index.html" --dir "$TARGET_DIR" --clobber 2>/dev/null; then
+              echo "Downloaded release asset successfully."
+            else
+              echo "Release asset download failed; falling back to GitHub raw ref..."
+              curl -sSL "https://raw.githubusercontent.com/smford/md-web-renderer/${VERSION}/index.html" -o "$TARGET_DIR/index.html"
+            fi
+          fi
 
           # Prevent GitHub Pages from processing markdown through Jekyll
           touch "$TARGET_DIR/.nojekyll"
