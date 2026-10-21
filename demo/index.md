@@ -212,6 +212,14 @@ Built with design guidance and accessibility characteristics inspired by the UK 
 * **Reduced Motion:** Fully honors `prefers-reduced-motion: reduce` by disabling smooth scrolling, animations, and continuous canvas physics.
 * **Screen Reader Live Announcements:** Dynamic actions (copying code snippets, search result counts, theme switches) are announced via an `aria-live="polite"` region.
 
+### Mathematical Formulas (LaTeX / KaTeX)
+
+Render complex mathematical expressions and scientific notation with TeX syntax:
+
+$$\text{Entropy} = -\sum_{i} P(c_i) \log_2 P(c_i)$$
+
+Inline formulas are also supported naturally within text, such as $E = mc^2$ or detection thresholds like $\ge 4.6$ bits per character. Equations are rendered using MathML and vector typography for accessibility and crisp display at all zoom levels.
+
 ### GitHub Actions Customization
 
 Configure your GitHub Actions deployment with custom branding, custom domains, or custom CSS:

@@ -23,6 +23,7 @@ A zero-build, single-file documentation engine that turns folders of Markdown fi
 - **Navigation Sidebar (`_sidebar.md` / `SUMMARY.md`):** Optional left navigation tree (Docsify/GitBook style) with active link tracking and mobile drawer.
 - **Dark / Light Mode Switcher:** One-click header toggle with local persistence and adaptive Mermaid diagrams.
 - **GitHub Flavored Markdown:** Supports tables, task lists, and GitHub callouts (`[!NOTE]`, `[!TIP]`, `[!WARNING]`, etc.).
+- **LaTeX Mathematical Formulas (KaTeX):** Full support for inline TeX formulas (`$formula$`) and display equation blocks (`$$formula$$`) with accessible MathML typography.
 - **Interactive Mermaid Diagrams:** Automatically renders Mermaid diagrams with pan, zoom, reset, and one-click SVG/PNG exports.
 - **Fast In-Memory Search (`⌘K` / `Ctrl+K`):** Full-text search and command palette with weighted ranking across titles, headings, and content.
 - **Syntax Highlighting & One-Click Copy:** Automatic language detection and syntax highlighting with PrismJS.
