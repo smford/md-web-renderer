@@ -56,13 +56,13 @@ runs:
 
         # Optional site title customization
         if [ -n "${{ inputs.title }}" ]; then
-          python3 -c "import sys; p, t = sys.argv[1], sys.argv[2]; open(p, 'w', encoding='utf-8').write(open(p, 'r', encoding='utf-8').read().replace('<title>Documentation</title>', f'<title>{t}</title>').replace('<a href=\"#index.md\" id=\"site-title\">Documentation</a>', f'<a href=\"#index.md\" id=\"site-title\">{t}</a>'))" "$TARGET_DIR/index.html" "${{ inputs.title }}"
+          python3 -c "import sys; p, t = sys.argv[1], sys.argv[2]; c = open(p, 'r', encoding='utf-8').read().replace('<title>Documentation</title>', f'<title>{t}</title>').replace('<a href=\"#index.md\" id=\"site-title\">Documentation</a>', f'<a href=\"#index.md\" id=\"site-title\">{t}</a>'); open(p, 'w', encoding='utf-8').write(c)" "$TARGET_DIR/index.html" "${{ inputs.title }}"
         fi
 
         # Optional custom CSS injection
         if [ -n "${{ inputs.custom-css }}" ] && [ -f "${{ inputs.custom-css }}" ]; then
           cp "${{ inputs.custom-css }}" "$TARGET_DIR/custom.css"
-          python3 -c "import sys; p = sys.argv[1]; open(p, 'w', encoding='utf-8').write(open(p, 'r', encoding='utf-8').read().replace('</head>', '<link rel=\"stylesheet\" href=\"custom.css\">\n</head>'))" "$TARGET_DIR/index.html"
+          python3 -c "import sys; p = sys.argv[1]; c = open(p, 'r', encoding='utf-8').read().replace('</head>', '<link rel=\"stylesheet\" href=\"custom.css\">\n</head>'); open(p, 'w', encoding='utf-8').write(c)" "$TARGET_DIR/index.html"
         fi
 
         # Optional CNAME for custom domains
@@ -89,7 +89,7 @@ runs:
           REPO_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
         fi
         if [ -n "$REPO_URL" ]; then
-          python3 -c "import sys; p, u = sys.argv[1], sys.argv[2]; open(p, 'w', encoding='utf-8').write(open(p, 'r', encoding='utf-8').read().replace('</head>', f'<meta name=\"repo-url\" content=\"{u}\">\n</head>'))" "$TARGET_DIR/index.html" "$REPO_URL"
+          python3 -c "import sys; p, u = sys.argv[1], sys.argv[2]; c = open(p, 'r', encoding='utf-8').read().replace('</head>', f'<meta name=\"repo-url\" content=\"{u}\">\n</head>'); open(p, 'w', encoding='utf-8').write(c)" "$TARGET_DIR/index.html" "$REPO_URL"
         fi
 
         # Optional link validation check
