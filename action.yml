@@ -94,29 +94,7 @@ runs:
 
         # Optional link validation check
         if [ "${{ inputs.check-links }}" = "true" ]; then
-          python3 -c "import textwrap, sys; exec(textwrap.dedent(r'''
-          import os, sys, re, glob
-          target_dir = sys.argv[1]
-          broken = []
-          md_files = glob.glob(os.path.join(target_dir, '**/*.md'), recursive=True)
-          for f in md_files:
-              content = open(f, 'r', encoding='utf-8', errors='ignore').read()
-              for m in re.finditer(r'\[(?:[^\]]+)\]\(([^)]+)\)', content):
-                  link = m.group(1).split('#')[0]
-                  if link and not link.startswith(('http://', 'https://', 'mailto:', '#', 'data:')):
-                      base = os.path.dirname(f)
-                      resolved = os.path.normpath(os.path.join(base, link))
-                      if not os.path.exists(resolved):
-                          broken.append((f, link))
-          if broken:
-              print('::warning::[md-web-renderer] Found relative links to non-existent files:')
-              for f, link in broken[:10]:
-                  print(f'::warning file={f}::Broken relative link: {link}')
-              if len(broken) > 10:
-                  print(f'::warning::... and {len(broken) - 10} more broken links')
-          else:
-              print('[md-web-renderer] All relative links validated successfully.')
-          '''))" "$TARGET_DIR"
+          python3 -c "import os, sys, re, glob; target_dir = sys.argv[1]; broken = [(f, m.group(1).split('#')[0]) for f in glob.glob(os.path.join(target_dir, '**/*.md'), recursive=True) for m in re.finditer(r'\[(?:[^\]]+)\]\(([^)]+)\)', open(f, 'r', encoding='utf-8', errors='ignore').read()) if m.group(1).split('#')[0] and not m.group(1).split('#')[0].startswith(('http://', 'https://', 'mailto:', '#', 'data:')) and not os.path.exists(os.path.normpath(os.path.join(os.path.dirname(f), m.group(1).split('#')[0])))]; print(f'::warning::Found {len(broken)} broken link(s)') if broken else print('[md-web-renderer] All relative links validated successfully.')" "$TARGET_DIR"
         fi
 
     - name: Upload Pages artifact
