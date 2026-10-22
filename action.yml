@@ -94,7 +94,7 @@ runs:
 
         # Optional link validation check
         if [ "${{ inputs.check-links }}" = "true" ]; then
-          python3 -c "
+          python3 -c "import textwrap, sys; exec(textwrap.dedent(r'''
           import os, sys, re, glob
           target_dir = sys.argv[1]
           broken = []
@@ -116,7 +116,7 @@ runs:
                   print(f'::warning::... and {len(broken) - 10} more broken links')
           else:
               print('[md-web-renderer] All relative links validated successfully.')
-          " "$TARGET_DIR"
+          '''))" "$TARGET_DIR"
         fi
 
     - name: Upload Pages artifact
